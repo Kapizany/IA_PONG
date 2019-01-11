@@ -8,7 +8,6 @@ import pygame
 import time
 
 sleep = [500] 
-
 class Ball:
     x = 0
     y = 0
@@ -45,12 +44,16 @@ class Life:
 
     def updateLife(self):
         self.number -= 1
+    
+    def updateLife1(self):
+        self.number += 1
 
     
 
 
 class Player:
     step = 44
+    score = 0 
     x = 11*step
     y = 12
     direction = 0
@@ -90,11 +93,12 @@ class Player:
             surface.blit(image,(self.x + 1.5*i*self.step,self.y*self.step))
             surface.blit(image,(self.x - 1.5*i*self.step,self.y*self.step))
 
-
+    
 class Game:
     def wallCollision(self, y_ball, windowHeight):
         if y_ball >= windowHeight:
             print("Se Fudeu!")
+            pygame.mixer.Channel(4).play(pygame.mixer.Sound('Hit_Hurt3.wav'), maxtime=600)
             return True
         return False
 
@@ -103,6 +107,8 @@ class Game:
             if (y_ball + ballHeight/2 > y_player - playerHeight*0.4) and (y_ball - ballHeight/2 < y_player + playerHeight/2):
                 return True
         return False
+
+
 
 class App:
  
@@ -117,6 +123,7 @@ class App:
     player_length = 3
     player = 0
     ball = 0
+    score = 0 
 
  
     def __init__(self):
@@ -133,13 +140,12 @@ class App:
     def on_init(self):
         pygame.init()
         self._display_surf = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.HWSURFACE)
- 
         pygame.display.set_caption('IA PONG')
         self._running = True
-        self._image_surf = pygame.transform.scale(pygame.image.load("sipahi.jpg").convert(), (int(self.playerWidth/3),self.playerHeight))
+        self._image_surf = pygame.transform.scale(pygame.image.load("plat.png").convert(), (int(self.playerWidth/3),self.playerHeight))
         self._ball_surf = pygame.image.load("lua.png").convert()
         self._life_surf = pygame.transform.scale(self._ball_surf, (self.lifeWidth,self.lifeHeight))
- 
+
     def on_event(self, event):
         if event.type == QUIT:
             self._running = False
@@ -147,13 +153,24 @@ class App:
     def on_loop(self):
         self.player.update()
         self.ball.update()
+        
  
         # does player catch the ball?
         if self.game.caughtBall(self.player.x,self.player.y*self.ball.step,self.ball.x, self.ball.y,self.playerWidth,self.playerHeight,self.ballWidth,self.ballHeight):
             self.ball.updateSleep()
             self.ball.x = randint(3,15) * self.ball.step
             self.ball.y = 0
-                
+            self.player.score += 1
+
+            if self.player.score % 10 ==0:
+                pygame.mixer.Channel(1).play(pygame.mixer.Sound('Pickup_Coin4.wav'), maxtime=600)
+
+            if self.player.score % 45 == 0:
+                pygame.mixer.Channel(2).play(pygame.mixer.Sound('Powerup10.wav'), maxtime=600)
+                self.life.updateLife1()
+
+            else:
+                pygame.mixer.Channel(0).play(pygame.mixer.Sound('Pickup_Coin.wav'), maxtime=600)
  
  
         # does ball collide with wall?
@@ -162,6 +179,7 @@ class App:
             print("x[0] (" + str(self.ball.x) + "," + str(self.ball.y) + ")")
             if self.life.number == 0:
                 self._running = False
+                print("Score:",self.player.score)
             else:
                 self.life.updateLife()
             self.ball.createBall(randint(3,15))
@@ -172,6 +190,14 @@ class App:
  
     def on_render(self):
         self._display_surf.fill((0,0,0))
+         
+        white = (255, 255, 255) #rgb
+
+        message = self.player.score
+        font = pygame.font.Font(None, 40)
+        text = font.render(str(message), 1, white)
+        self._display_surf.blit(text, (900,10))
+
         self.player.draw(self._display_surf, self._image_surf)
         self.ball.draw(self._display_surf, self._ball_surf)
         self.life.draw(self._display_surf, self._life_surf)
@@ -183,7 +209,13 @@ class App:
     def on_execute(self):
         if self.on_init() == False:
             self._running = False
- 
+
+
+        pygame.mixer.music.load('track.mp3')
+        pygame.mixer.music.set_volume(0.4)
+        pygame.mixer.music.play(-1)
+
+
         while( self._running ):
             pygame.event.pump()
             keys = pygame.key.get_pressed() 
@@ -202,9 +234,13 @@ class App:
  
             self.on_loop()
             self.on_render()
- 
+
+
+
             time.sleep (50 /sleep[0])
         self.on_cleanup()
 if __name__ == "__main__" :
     theApp = App()
     theApp.on_execute()
+
+    
