@@ -2,7 +2,6 @@ from random import random
 from random import randint
 import matplotlib.pyplot as plt
 import math
-import pymysql
 
 def gerarBase(windowWidth,max_pos_ball,min_pos_ball):
     distance = max_pos_ball - min_pos_ball
@@ -33,6 +32,7 @@ class Jogador:
         self.board_size = board_size #tamanho da raquete
         self.geracao = geracao
         self.nota_avaliacao = 0
+        self.notas_jogadas = []
         self.cromossomo = []
 
         for i in range(len(difference)):
@@ -42,13 +42,17 @@ class Jogador:
         nota = 0
         for i in range(len(self.cromossomo)):
             if ((self.cromossomo[i] == 0) and (math.fabs(self.difference[i])<= self.board_size*0.5)): # Se manda ficar parado e a bola esta no alcance da raquete ok
-                nota += 10
+                nota += 100
+                self.notas_jogadas.append(100)
             elif ((self.cromossomo[i] == -1) and (self.difference[i] < 0)): # se a bolinha esta a esquerda da raquete e manda ir pra esquerda ok
-                nota += 10
+                nota += 100
+                self.notas_jogadas.append(100)
             elif ((self.cromossomo[i] == 1) and (self.difference[i] > 0)): # se a bolinha esta a direita da raquete e manda ir pra direita ok
-                nota += 10
+                nota += 100
+                self.notas_jogadas.append(100)
             else: #se nao eh nenhum dos 3, errouw
                 nota += 0.01
+                self.notas_jogadas.append(0.01)
 
         self.nota_avaliacao = nota
 
@@ -164,21 +168,31 @@ difference = []
 base = gerarBase(960,15*44,3*44)
 #base [0] coluna posicao raquete
 #base[1] coluna posicao bolinha
-x_ball = base[0][:]
-x_raquete = base[1][:]
+x_raquete = base[0][:]
+x_ball = base[1][:]
 for i in range(len(base[0])):
     difference.append(x_ball[i] - x_raquete[i])
 
-tamanho_populacao = 20
+tamanho_populacao = 30
 taxa_mutacao = 0.01
-numero_geracoes = 500
+numero_geracoes = 200
 board_size = 66*3
 
 ag = AlgoritmoGenetico(tamanho_populacao)
 
 resultado = ag.resolver(taxa_mutacao, numero_geracoes, difference, board_size)
-
+f = open('base_treino.txt', 'w')
+j=0
+for i in range(len(base[0])):
+    if ag.melhor_solucao.notas_jogadas[i] == 100:
+        f.write(str(x_ball[i]) + ' ')
+        f.write (str(x_raquete[i]) + ' ')
+        f.write (str(resultado[i]) + '\n')
+        j+=1
+f.close()
+print(len(resultado))
 print(str(ag.melhor_solucao.nota_avaliacao))
+print (j)
 plt.plot(ag.lista_solucoes)
 plt.title("Acompanhamento dos valores")
 plt.show()
