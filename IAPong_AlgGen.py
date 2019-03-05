@@ -2,6 +2,15 @@ from random import random
 from random import randint
 import matplotlib.pyplot as plt
 import math
+import enum
+
+class Constantes(enum.Enum):
+    nota_max = 100
+    nota_min = 0.01
+    tamanho_populacao = 30
+    taxa_mutacao = 0.01
+    numero_geracoes = 200
+    board_size = 66*3
 
 def gerarBase(windowWidth,max_pos_ball,min_pos_ball):
     distance = max_pos_ball - min_pos_ball
@@ -9,7 +18,7 @@ def gerarBase(windowWidth,max_pos_ball,min_pos_ball):
     '''f =  open('base-jogadas.txt', 'w')
     f.write('x_raquete ')
     f.write('x_ball\n')'''
-    for j in range(0,windowWidth+1,5):
+    for j in range(0,windowWidth+1,3):
         for i in range (0,distance +1,5):
             '''f.write(str(j) + ' ') # posiçao da raquete
             f.write(str(i + min_pos_ball)) #posição da bolinha 
@@ -36,23 +45,20 @@ class Jogador:
         self.cromossomo = []
 
         for i in range(len(difference)):
-            self.cromossomo.append(randint(-1,1)) # 0 fica parado, -1 esquerda e 1 direita
+            self.cromossomo.append(randint(0,1)) # 0 esquerda e 1 direita
 
     def avaliacao (self):
         nota = 0
         for i in range(len(self.cromossomo)):
-            if ((self.cromossomo[i] == 0) and (math.fabs(self.difference[i])<= self.board_size*0.5)): # Se manda ficar parado e a bola esta no alcance da raquete ok
-                nota += 100
-                self.notas_jogadas.append(100)
-            elif ((self.cromossomo[i] == -1) and (self.difference[i] < 0)): # se a bolinha esta a esquerda da raquete e manda ir pra esquerda ok
-                nota += 100
-                self.notas_jogadas.append(100)
-            elif ((self.cromossomo[i] == 1) and (self.difference[i] > 0)): # se a bolinha esta a direita da raquete e manda ir pra direita ok
-                nota += 100
-                self.notas_jogadas.append(100)
+            if ((self.cromossomo[i] == 0) and (self.difference[i]<=0)): # Se manda a raquete para a esquerda e a bolinha esta a esquerda ok
+                nota += Constantes.nota_max.value
+                self.notas_jogadas.append(Constantes.nota_max.value)
+            elif ((self.cromossomo[i] == 1) and (self.difference[i] > 0)): # Se manda a raquete para a direita e a bolinha esta a direita ok
+                nota += Constantes.nota_max.value
+                self.notas_jogadas.append(Constantes.nota_max.value)
             else: #se nao eh nenhum dos 3, errouw
-                nota += 0.01
-                self.notas_jogadas.append(0.01)
+                nota += Constantes.nota_min.value
+                self.notas_jogadas.append(Constantes.nota_min.value)
 
         self.nota_avaliacao = nota
 
@@ -72,12 +78,10 @@ class Jogador:
         #print("Antes: %s" %self.cromossomo)
         for i in range(len(self.cromossomo)):
             if random() < taxa_mutacao:
-                if self.cromossomo[i] == -1:
-                    self.cromossomo[i] = 0
-                elif self.cromossomo[i] == 0:
+                if self.cromossomo[i] == 0:
                     self.cromossomo[i] = 1
                 else:
-                    self.cromossomo[i] = -1
+                    self.cromossomo[i] = 0
         #print("Depois: %s" %self.cromossomo)
         return self
 
@@ -165,7 +169,7 @@ class AlgoritmoGenetico:
 x_ball = []
 x_raquete = []
 difference = []
-base = gerarBase(960,15*44,3*44)
+base = gerarBase(960,15*44,3*44) #Escolhido com base no tamanho da tela e do range de onde a bolinha pode aparecer
 #base [0] coluna posicao raquete
 #base[1] coluna posicao bolinha
 x_raquete = base[0][:]
@@ -173,10 +177,10 @@ x_ball = base[1][:]
 for i in range(len(base[0])):
     difference.append(x_ball[i] - x_raquete[i])
 
-tamanho_populacao = 30
-taxa_mutacao = 0.01
-numero_geracoes = 200
-board_size = 66*3
+tamanho_populacao = Constantes.tamanho_populacao.value
+taxa_mutacao = Constantes.taxa_mutacao.value
+numero_geracoes = Constantes.numero_geracoes.value
+board_size = Constantes.board_size.value
 
 ag = AlgoritmoGenetico(tamanho_populacao)
 
@@ -184,7 +188,7 @@ resultado = ag.resolver(taxa_mutacao, numero_geracoes, difference, board_size)
 f = open('base_treino.txt', 'w')
 j=0
 for i in range(len(base[0])):
-    if ag.melhor_solucao.notas_jogadas[i] == 100:
+    if ag.melhor_solucao.notas_jogadas[i] == Constantes.nota_max.value:
         f.write(str(x_ball[i]) + ' ')
         f.write (str(x_raquete[i]) + ' ')
         f.write (str(resultado[i]) + '\n')

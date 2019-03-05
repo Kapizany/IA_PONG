@@ -6,6 +6,28 @@ from numpy import math
 from random import randint
 import pygame
 import time
+import pandas as pd
+from sklearn.model_selection import train_test_split
+import numpy as np
+from sklearn.svm import SVC
+from sklearn.metrics import confusion_matrix,classification_report
+from sklearn.neural_network import MLPClassifier
+from sklearn.model_selection import GridSearchCV
+
+f = open('base_treino.txt', 'r')
+table = []
+for line in f:
+    linha = line.split()
+    linha[0] = float(linha[0])
+    linha[1] = float(linha[1])
+    linha[2] = int(linha[2])
+    table.append(linha)
+f.close()
+df = pd.DataFrame(data=table, columns=['x_ball','x_raquete','Movimento'])
+X_treinamento, X_teste, y_treinamento, y_teste = train_test_split(df.drop('Movimento',axis=1),df['Movimento'], test_size=0.25)
+classificador = MLPClassifier()
+classificador.fit(X_treinamento,y_treinamento)
+predictions = classificador.predict(X_teste)
 
 sleep = [500] 
 class Ball:
@@ -220,18 +242,23 @@ class App:
             pygame.event.pump()
             keys = pygame.key.get_pressed() 
  
-            if (keys[K_RIGHT]):
+            '''if (keys[K_RIGHT]):
                 self.player.moveRight()
  
             elif (keys[K_LEFT]):
                 self.player.moveLeft()
 
             else:
-                self.player.noMove()
+                self.player.noMove()'''
 
             if (keys[K_ESCAPE]):
                 self._running = False
- 
+
+            predictions = classificador.predict([[self.ball.x,self.player.x]])[0]
+            if predictions == 1:
+                self.player.moveRight()
+            else:
+                self.player.moveLeft()
             self.on_loop()
             self.on_render()
 
