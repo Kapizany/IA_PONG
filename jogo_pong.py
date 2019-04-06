@@ -23,6 +23,7 @@ for line in f:
     linha[2] = int(linha[2])
     table.append(linha)
 f.close()
+#Data frame e uma funcao do pandas que cria tabelas
 df = pd.DataFrame(data=table, columns=['x_ball','x_raquete','Movimento'])
 X_treinamento, X_teste, y_treinamento, y_teste = train_test_split(df.drop('Movimento',axis=1),df['Movimento'], test_size=0.25)
 classificador = MLPClassifier()
@@ -253,7 +254,7 @@ class App:
 
             if (keys[K_ESCAPE]):
                 self._running = False
-
+            #Os comandos do teclado sao trocaos pelos valores obtidos no predictions:
             predictions = classificador.predict([[self.ball.x,self.player.x]])[0]
             if predictions == 1:
                 self.player.moveRight()
